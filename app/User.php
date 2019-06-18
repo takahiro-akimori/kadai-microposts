@@ -9,11 +9,7 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    
     protected $fillable = [
         'name', 'email', 'password',
     ];
@@ -31,17 +27,18 @@ class User extends Authenticatable
     変なデータが勝手に保存される可能性があります。セキュリティ上、良いことではありません。
     
     そこで通常は、全てのカラムをデフォルトでは「一気に保存不可」とし
-    $fillable で「一気に保存可能」なパラメータを指定することで
+    fillable で「一気に保存可能」なパラメータを指定することで
     想定していないパラメータへのデータ代入を防ぎ、なおかつ
     一気にデータを代入することが可能になります。
     */
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
+    
     protected $hidden = [
         'password', 'remember_token',
     ];
+    
+    public function microposts()
+    {
+        return $this->hasMany(Micropost::class);
+    }
 }
