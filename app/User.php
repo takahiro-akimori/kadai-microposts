@@ -13,24 +13,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password',
     ];
-    /*
-    ユーザの作成に create() という関数を使います。
-    create() は save() と同じくデータベースに INSERT を発行する関数です。
-    create() は save() のようにインスタンスを作成する必要がなく
-    （$user->name = $request->name;みたいな）
-    データを代入してそのままユーザを作成することができます
-    save() について、おさらいしましょう。 save() では、1つずつ、
-    データを代入し保存するしかできない
     
-    create() は一気にデータを代入することができますが、
-    全ての項目がデフォルトで「一気に保存可能」になっていると
-    変なデータが勝手に保存される可能性があります。セキュリティ上、良いことではありません。
-    
-    そこで通常は、全てのカラムをデフォルトでは「一気に保存不可」とし
-    fillable で「一気に保存可能」なパラメータを指定することで
-    想定していないパラメータへのデータ代入を防ぎ、なおかつ
-    一気にデータを代入することが可能になります。
-    */
 
     
     protected $hidden = [
@@ -40,5 +23,53 @@ class User extends Authenticatable
     public function microposts()
     {
         return $this->hasMany(Micropost::class);
+    }
+    public function followings()
+    {
+        return $this->belongsToMany(User::class, 'user_follow', 'user_id', 'follow_id')->withTimestamps();
+    }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'user_follow', 'follow_id', 'user_id')->withTimestamps();
+    }
+    
+     public function follow($userId)
+    {
+        // 既にフォローしているかの確認
+        $exist = $this->is_following($userId);
+        // 相手が自分自身ではないかの確認
+        $its_me = $this->id == $userId;
+    
+        if ($exist || $its_me) {
+            // 既にフォローしていれば何もしない
+            return false;
+        } else {
+            // 未フォローであればフォローする
+            $this->followings()->attach($userId);
+            return true;
+        }
+    }
+    
+    public function unfollow($userId)
+    {
+        // 既にフォローしているかの確認
+        $exist = $this->is_following($userId);
+        // 相手が自分自身ではないかの確認
+        $its_me = $this->id == $userId;
+    
+        if ($exist && !$its_me) {
+            // 既にフォローしていればフォローを外す
+            $this->followings()->detach($userId);
+            return true;
+        } else {
+            // 未フォローであれば何もしない
+            return false;
+        }
+    }
+    
+    public function is_following($userId)
+    {
+        return $this->followings()->where('follow_id', $userId)->exists();
     }
 }
